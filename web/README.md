@@ -5,6 +5,7 @@
 
 - เปิด `web/index.html` ในเบราว์เซอร์ได้เลย
 - เวอร์ชันที่เผยแพร่: https://claude.ai/artifact/4koHXjnjcGDqCHiJhcWjMT
+- แบบร่าง UX/UI (หน้าพนักงานและหน้าผู้ดูแล ทั้งเดสก์ท็อปและมือถือ): https://claude.ai/artifact/WXShNayQtM24zyvyMsD9YP
 
 ## ไฟล์
 
