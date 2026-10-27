@@ -1,0 +1,602 @@
+<title>ผู้ช่วยระเบียบนาวา</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: three-pane chat app. Deep red sidebar (session history, document coverage), chat in the centre, evidence cards on the right. Below 1180px the sidebar becomes a drawer, below 860px the evidence becomes a bottom sheet */
+:root {
+  --bg: #F7F4EF; --surface: #FFFFFF; --line: #E6DED2; --line-soft: #F0EAE1;
+  --fg: #1F1A17; --muted: #6B5F55;
+  --red: #9B1C1C; --red-on: #FFFFFF; --red-soft: #FBEDEC; --red-line: #E9BDB9;
+  --gold: #B8862B; --gold-ink: #7A5A12; --gold-soft: #FBF3E0; --gold-line: #E8CF8F;
+  --side-bg: #6B1414; --side-fg: #FBEFD9; --side-muted: #E7C9A6; --side-line: #8A2A22; --side-hover: #7E1C1A; --side-gold: #E9C46A;
+  --ok-bg: #E7F3EA; --ok-fg: #1E6236;
+  --warn-bg: #FFF1E6; --warn-line: #F0B98A; --warn-fg: #7A3300;
+  --chip-bg: #F2EDE6; --chip-fg: #4A3F37;
+  --used-bg: #FBF0D2; --used-line: #E3C26F;
+  --quote-bg: #FBF9F6; --scrim: rgba(31, 26, 23, 0.45);
+  --font-body: 'IBM Plex Sans Thai', 'Noto Sans Thai', 'Thonburi', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141010; --surface: #1E1816; --line: #3A2E29; --line-soft: #2C2320;
+    --fg: #F2EAE2; --muted: #B9A99C;
+    --red: #B3261E; --red-on: #FFFFFF; --red-soft: #3A1715; --red-line: #6E2A24;
+    --gold: #D9B25C; --gold-ink: #E9C979; --gold-soft: #33280F; --gold-line: #6B5420;
+    --side-bg: #2A0E0E; --side-fg: #F6E7D2; --side-muted: #D2B48F; --side-line: #4A1A17; --side-hover: #3A1412; --side-gold: #E9C46A;
+    --ok-bg: #14281B; --ok-fg: #86D19D;
+    --warn-bg: #33200F; --warn-line: #6E4320; --warn-fg: #F5BE8A;
+    --chip-bg: #2C2320; --chip-fg: #D8CBBE;
+    --used-bg: #3A3012; --used-line: #7A6420;
+    --quote-bg: #181312; --scrim: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141010; --surface: #1E1816; --line: #3A2E29; --line-soft: #2C2320;
+  --fg: #F2EAE2; --muted: #B9A99C;
+  --red: #B3261E; --red-on: #FFFFFF; --red-soft: #3A1715; --red-line: #6E2A24;
+  --gold: #D9B25C; --gold-ink: #E9C979; --gold-soft: #33280F; --gold-line: #6B5420;
+  --side-bg: #2A0E0E; --side-fg: #F6E7D2; --side-muted: #D2B48F; --side-line: #4A1A17; --side-hover: #3A1412; --side-gold: #E9C46A;
+  --ok-bg: #14281B; --ok-fg: #86D19D;
+  --warn-bg: #33200F; --warn-line: #6E4320; --warn-fg: #F5BE8A;
+  --chip-bg: #2C2320; --chip-fg: #D8CBBE;
+  --used-bg: #3A3012; --used-line: #7A6420;
+  --quote-bg: #181312; --scrim: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.65; overflow: hidden; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.mono { font-family: var(--font-mono); }
+
+.app { height: 100%; display: grid; grid-template-columns: 264px minmax(0, 1fr) 340px; }
+
+/* sidebar */
+.side { min-height: 0; overflow-y: auto; background: var(--side-bg); color: var(--side-fg); display: flex; flex-direction: column; gap: 18px; padding-block: 16px 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: 16px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.mark { width: 38px; height: 38px; border-radius: 10px; background: var(--side-gold); color: #4A0E0E; display: grid; place-items: center; flex: none; }
+.brand b { display: block; font-size: 16px; line-height: 1.3; }
+.brand span { font-size: 12px; color: var(--side-muted); }
+.new { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 12px; border: 1px solid var(--side-gold); background: transparent; color: var(--side-fg); font-weight: 600; cursor: pointer; }
+.new:hover { background: var(--side-hover); }
+.side h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--side-muted); }
+.side-list { display: flex; flex-direction: column; gap: 2px; }
+.side-item { text-align: left; min-height: 40px; padding: 8px 10px; border-radius: 8px; border: none; background: transparent; color: var(--side-fg); font-size: 14px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-item:hover { background: var(--side-hover); }
+.side-item[aria-current="true"] { background: var(--side-hover); box-shadow: inset 3px 0 0 var(--side-gold); }
+.side-empty { font-size: 13px; color: var(--side-muted); padding: 4px 10px; }
+.dept { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; font-size: 14px; }
+.dept span:last-child { font-variant-numeric: tabular-nums; color: var(--side-gold); font-weight: 600; }
+.side-note { font-size: 12px; color: var(--side-muted); padding: 2px 10px; line-height: 1.6; }
+details.demo { border: 1px solid var(--side-line); border-radius: 10px; padding: 8px 12px; font-size: 13px; }
+details.demo summary { cursor: pointer; font-weight: 600; min-height: 28px; display: flex; align-items: center; }
+.demo-body { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
+.seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--side-line); border-radius: 9px; padding: 3px; gap: 3px; }
+.seg label { display: flex; align-items: center; justify-content: center; min-height: 34px; border-radius: 6px; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--side-gold); color: #4A0E0E; font-weight: 600; }
+.seg label:has(input:focus-visible) { outline: 3px solid var(--side-gold); outline-offset: 1px; }
+.check { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.check input { width: 17px; height: 17px; margin-top: 3px; accent-color: var(--side-gold); flex: none; }
+.fine { margin-top: auto; font-size: 11px; color: var(--side-muted); line-height: 1.6; }
+
+/* chat */
+.chat { min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.chat-top { flex: none; display: flex; align-items: center; gap: 12px; padding-block: 14px; padding-inline: 24px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.chat-top h1 { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.3; }
+.chat-top p { margin: 0; font-size: 13px; color: var(--muted); }
+.chat-top .grow { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.icon-btn { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: none; place-items: center; cursor: pointer; flex: none; }
+.icon-btn:hover { border-color: var(--gold-line); background: var(--gold-soft); }
+.thread { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.inner { width: 100%; max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.welcome { text-align: center; padding: 48px 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.welcome .mark { width: 52px; height: 52px; border-radius: 14px; background: var(--red); color: var(--side-gold); }
+.welcome h2 { margin: 0; font-size: 22px; }
+.welcome p { margin: 0; color: var(--muted); }
+.suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 8px; }
+.pill { min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold-line); background: var(--surface); font-size: 14px; cursor: pointer; }
+.pill:hover { background: var(--gold-soft); }
+.user { align-self: flex-end; max-width: 78%; background: var(--red); color: var(--red-on); padding: 10px 16px; border-radius: 18px 18px 4px 18px; overflow-wrap: anywhere; }
+.bot { display: flex; gap: 12px; align-items: flex-start; }
+.avatar { width: 32px; height: 32px; border-radius: 9px; background: var(--red); color: var(--side-gold); display: grid; place-items: center; flex: none; margin-top: 4px; }
+.bubble { flex: 1 1 auto; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 4px 18px 18px 18px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.answer { display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.8; }
+.answer p { margin: 0; }
+.chip { font-family: var(--font-mono); font-size: 12px; line-height: 1.4; padding: 2px 7px; margin-left: 6px; border-radius: 6px; border: 1px solid var(--gold-line); background: var(--gold-soft); color: var(--gold-ink); cursor: pointer; vertical-align: 1px; white-space: nowrap; }
+.chip:hover { border-color: var(--gold); }
+.chip[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: var(--red-on); }
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.6; }
+.note.warn { background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-fg); }
+.note.info { background: var(--chip-bg); color: var(--fg); }
+.note b { font-weight: 600; }
+.note svg { flex: none; margin-top: 2px; }
+.refs { border-top: 1px solid var(--line-soft); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.refs h3 { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+.ref { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; }
+.ref .mono { font-size: 12px; font-weight: 500; }
+.ref .dim { color: var(--muted); }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--chip-bg); color: var(--chip-fg); }
+.badge.ok { background: var(--ok-bg); color: var(--ok-fg); }
+.badge.old { background: var(--warn-bg); color: var(--warn-fg); }
+.acts { display: flex; align-items: center; gap: 4px; }
+.act { width: 36px; height: 36px; border-radius: 8px; border: none; background: transparent; display: grid; place-items: center; cursor: pointer; color: var(--muted); }
+.act:hover { background: var(--chip-bg); color: var(--fg); }
+.act[aria-pressed="true"] { color: var(--red); background: var(--red-soft); }
+.act-status { font-size: 12px; color: var(--muted); margin-left: 6px; }
+
+.composer { flex: none; padding-block: 12px max(14px, env(safe-area-inset-bottom, 0px)); padding-inline: 24px; background: var(--bg); }
+.composer .inner { gap: 6px; }
+.field { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 5px 5px 18px; }
+.field:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+.field input { flex: 1 1 auto; min-width: 0; border: none; outline: none; background: transparent; font-size: 16px; padding: 8px 0; }
+.send { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--red); color: var(--red-on); display: grid; place-items: center; cursor: pointer; flex: none; }
+.send:hover { filter: brightness(1.1); }
+.disclaimer { text-align: center; font-size: 12px; color: var(--muted); }
+
+/* evidence */
+.evidence { min-height: 0; overflow-y: auto; background: var(--bg); padding-block: 16px 20px; padding-left: 16px; padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 12px; }
+.ev-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.ev-head p { margin: 0; font-size: 12px; color: var(--muted); }
+.ev-close { display: none; }
+.ev { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.ev.is-open { border-color: var(--gold); }
+.ev-main { width: 100%; text-align: left; border: none; background: transparent; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; }
+.ev-main:hover { background: var(--quote-bg); }
+.ev-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.ev-id { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-radius: 5px; background: var(--gold-soft); color: var(--gold-ink); border: 1px solid var(--gold-line); }
+.ev-cited { color: var(--red); font-weight: 600; }
+.ev-rel { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 4px; border-radius: 2px; background: var(--line-soft); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--gold); border-radius: 2px; }
+.ev-title { font-size: 14px; font-weight: 600; line-height: 1.45; }
+.ev-meta { font-size: 11px; color: var(--muted); }
+.ev-snip { font-size: 13px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ev-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.passage { margin: 0; padding: 6px; border-radius: 10px; background: var(--quote-bg); border: 1px solid var(--line-soft); font-size: 14px; line-height: 1.75; display: flex; flex-direction: column; gap: 2px; }
+.passage p { margin: 0; padding: 5px 8px; border-radius: 7px; }
+.passage p.used { background: var(--used-bg); box-shadow: inset 0 0 0 1px var(--used-line); }
+.hidden-line { font-size: 12px; color: var(--muted); font-style: italic; }
+.legend { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.legend i { width: 12px; height: 12px; border-radius: 3px; background: var(--used-bg); box-shadow: inset 0 0 0 1px var(--used-line); }
+.ghost { min-height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; cursor: pointer; }
+.ghost:hover { border-color: var(--gold-line); background: var(--gold-soft); }
+.score { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.ev-empty { font-size: 13px; color: var(--muted); padding: 12px; border: 1px dashed var(--line); border-radius: 12px; }
+
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 20; }
+
+@media (max-width: 1180px) {
+  .app { grid-template-columns: minmax(0, 1fr) 320px; }
+  .side { position: fixed; top: 0; bottom: 0; left: 0; width: min(300px, 86%); z-index: 21; display: none; padding-top: max(16px, env(safe-area-inset-top, 0px)); }
+  .side.open { display: flex; }
+  #menu-btn { display: grid; }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .chat { border-right: none; }
+  .chat-top, .composer, .thread { padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+  .chat-top p { display: none; }
+  #ev-btn { display: grid; }
+  .avatar { display: none; }
+  .bubble { border-radius: 18px; padding: 14px 16px; }
+  .evidence { position: fixed; left: 0; right: 0; bottom: 0; max-height: 85%; z-index: 21; border-radius: 20px 20px 0 0; box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.2); display: none; padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  .evidence.open { display: flex; }
+  .ev-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .ev-close { display: grid; }
+}
+@media (prefers-reduced-motion: no-preference) { .bot, .user { animation: rise .2s ease-out; } @keyframes rise { from { transform: translateY(4px); } to { transform: none; } } }
+</style>
+
+<div class="app">
+  <aside class="side" id="side" aria-label="เมนู">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
+      </div>
+      <div><b>นาวา ดิจิทัล</b><span>ผู้ช่วยระเบียบบริษัท</span></div>
+    </div>
+    <button class="new" type="button" id="new">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      เริ่มคำถามใหม่
+    </button>
+    <section>
+      <h2>คำถามในรอบนี้</h2>
+      <div class="side-list" id="history"></div>
+    </section>
+    <section>
+      <h2>ลองถาม</h2>
+      <div class="side-list" id="examples"></div>
+    </section>
+    <section>
+      <h2 id="docs-title">เอกสารที่ใช้ตอบ</h2>
+      <div id="depts"></div>
+      <div class="side-note" id="docs-note"></div>
+    </section>
+    <details class="demo">
+      <summary>ตั้งค่าสาธิตสำหรับ workshop</summary>
+      <div class="demo-body">
+        <div class="seg" role="radiogroup" aria-label="วิธีค้น">
+          <label><input type="radio" name="method" id="m-hybrid" value="hybrid" checked><span>hybrid</span></label>
+          <label><input type="radio" name="method" id="m-tfidf" value="tfidf"><span>tfidf</span></label>
+        </div>
+        <label class="check" for="old"><input type="checkbox" id="old"><span>รวมฉบับเดิม (superseded)</span></label>
+        <label class="check" for="scores"><input type="checkbox" id="scores"><span>แสดงคะแนนในหลักฐาน</span></label>
+        <span class="side-note" style="padding: 0;">มีผลกับคำถามถัดไป</span>
+      </div>
+    </details>
+    <div class="fine">เอกสาร “นาวา ดิจิทัล” เป็นของสมมติจาก workshop RAG · ค้นด้วย TF-IDF + BM25 ในเบราว์เซอร์ ไม่ใช้ AI และไม่ส่งคำถามออกจากเครื่อง</div>
+  </aside>
+
+  <main class="chat">
+    <div class="chat-top">
+      <button class="icon-btn" type="button" id="menu-btn" aria-label="เปิดเมนู" aria-controls="side" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+      <div class="grow">
+        <h1>ถามระเบียบบริษัท</h1>
+        <p>ตอบจากเอกสารภายในเท่านั้น และอ้างอิงทุกข้อเท็จจริง</p>
+      </div>
+      <button class="icon-btn" type="button" id="ev-btn" aria-label="ดูหลักฐานที่ใช้ตอบ" aria-controls="evidence" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+      </button>
+    </div>
+    <div class="thread" id="thread" aria-live="polite"><div class="inner" id="inner"></div></div>
+    <form class="composer" id="form">
+      <div class="inner">
+        <label class="sr-only" for="q">ถามเรื่องระเบียบ สวัสดิการ การเบิก หรือ IT</label>
+        <div class="field">
+          <input id="q" name="q" type="text" autocomplete="off" enterkeyhint="send" placeholder="พิมพ์คำถามเรื่องระเบียบบริษัท">
+          <button class="send" type="submit" aria-label="ส่งคำถาม">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="disclaimer">คำตอบอ้างอิงเอกสารภายในเท่านั้น เรื่องสำคัญควรยืนยันกับฝ่ายที่เกี่ยวข้องอีกครั้ง</div>
+      </div>
+    </form>
+  </main>
+
+  <aside class="evidence" id="evidence" aria-label="หลักฐานที่ใช้ตอบ">
+    <div class="ev-head">
+      <div>
+        <h2>หลักฐานที่ใช้ตอบ</h2>
+        <p id="ev-sub"></p>
+      </div>
+      <button class="icon-btn ev-close" type="button" id="ev-close" aria-label="ปิด"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12"/><path d="M18 6 6 18"/></svg></button>
+    </div>
+    <div id="ev-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+  </aside>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+
+<script>
+var CHUNKS = /*__CHUNKS__*/;
+var SYNONYMS = /*__SYNONYMS__*/;
+/*__ENGINE__*/
+
+(function () {
+  var engine = createEngine(CHUNKS, SYNONYMS);
+  var EXAMPLES = ['ลาพักร้อนได้กี่วัน', 'เบิกค่าฟิตเนสได้เท่าไร', 'ใช้รถส่วนตัวเบิกกิโลเมตรละเท่าไร', 'ชาร์จรถอีวีที่ออฟฟิศได้นานแค่ไหน', 'ลืมรหัสผ่านต้องทำอย่างไร'];
+  var MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  // บรรทัดที่พยายามสั่งระบบ AI ไม่ใช่เนื้อหาระเบียบ จึงไม่แสดงและไม่ใช้ตอบ
+  var INSTRUCTION_LINE = /(ระบบ\s*AI|เพิกเฉยต่อคำสั่ง|ignore (all|previous) instructions)/i;
+  var TOPICS = 'การลา · ทำงานไฮบริด · สวัสดิการ · ประเมินผล · ลาออก · เบิกค่าใช้จ่าย · เดินทาง · จัดซื้อ · อาคารและห้องประชุม · เหตุฉุกเฉิน · รหัสผ่านและอุปกรณ์ IT · การใช้ AI · PDPA · บริการลูกค้า';
+  var BOOK = ['M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z', 'M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z'];
+  var wide = window.matchMedia('(min-width: 861px)');
+  var hasDrawer = window.matchMedia('(max-width: 1180px)');
+
+  var settings = { method: 'hybrid', includeOld: false, showScores: false };
+  var turns = [];
+  var active = -1;       // คำถามที่แผงหลักฐานแสดงอยู่
+  var openCard = null;   // chunk_id ของการ์ดที่เปิดดูต้นฉบับ
+  var $ = function (id) { return document.getElementById(id); };
+
+  function thaiDate(iso) {
+    var p = (iso || '').split('-');
+    return p.length === 3 ? Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0] : iso;
+  }
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k === 'text') e.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attrs[k]);
+      else e.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function svg(paths, size) {
+    var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    var n = String(size || 18);
+    s.setAttribute('width', n); s.setAttribute('height', n); s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '2');
+    s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round'); s.setAttribute('aria-hidden', 'true');
+    paths.forEach(function (d) { var p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', d); s.appendChild(p); });
+    return s;
+  }
+  function cleanLines(c) { return c.text.split('\n').filter(function (l) { return l.trim() && !INSTRUCTION_LINE.test(l); }); }
+
+  // ตรงน้อย: คำในคำถามพบในเอกสารน้อยกว่า 34% หรือคะแนนตัวอักษรต่ำและคำตรงกันไม่ถึง 60%
+  // ค่าเหล่านี้ตั้งจากคำถามชุด dev และคำถามนอกเรื่องที่ทดลอง
+  function isLow(c) { return !c || c.coverage < 0.34 || (c.relevance < 0.2 && c.coverage < 0.6); }
+
+  // เลือกบรรทัดที่มีคำจากคำถามมากที่สุด เรียงตามลำดับเดิม บรรทัดถัดไปต้องตรงไม่น้อยกว่า 60% ของบรรทัดที่ตรงที่สุด
+  function pickLines(c, terms, max) {
+    var lines = cleanLines(c).map(function (l, i) {
+      return { i: i, text: l, hit: terms.filter(function (t) { return l.indexOf(t) !== -1; }).length };
+    });
+    if (!lines.length) return [];
+    var best = Math.max.apply(null, lines.map(function (l) { return l.hit; }));
+    var floor = Math.max(1, Math.ceil(best * 0.6));
+    var chosen = lines.filter(function (l) { return l.hit >= floor; }).sort(function (a, b) { return b.hit - a.hit || a.i - b.i; }).slice(0, max);
+    if (!chosen.length) chosen = [lines[0]];
+    return chosen.sort(function (a, b) { return a.i - b.i; }).map(function (l) { return l.text; });
+  }
+
+  // คำตอบ: ไม่เกิน 2 บรรทัดจาก chunk อันดับ 1 และอีก 1 บรรทัดจาก chunk ถัดไปที่มีคำในคำถามครบเกือบทั้งหมด
+  function compose(results, terms) {
+    var top = results[0];
+    var parts = pickLines(top, terms, 2).map(function (t) { return { text: t, c: top }; });
+    var extra = results.slice(1, 4).filter(function (c) {
+      return c.status === top.status && !isLow(c) && c.coverage >= 0.67 && c.relevance >= 0.45 * top.relevance;
+    })[0];
+    if (extra) parts.push({ text: pickLines(extra, terms, 1)[0], c: extra });
+    return parts;
+  }
+
+  function ask(query) {
+    query = query.trim();
+    if (!query) return;
+    var out = engine.search(query, { k: 5, method: settings.method, includeSuperseded: settings.includeOld });
+    var top = out.results[0];
+    // ไม่มีคำไหนในคำถามตรงกับคำในเอกสารเลย ถือว่าอยู่นอกเรื่อง ไม่แสดงข้อความที่ไม่เกี่ยว
+    var offTopic = !top || top.matched.length === 0;
+    var parts = offTopic ? [] : compose(out.results, out.terms);
+    turns.push({
+      query: query, results: offTopic ? [] : out.results.slice(0, 4), expanded: out.expanded,
+      method: settings.method, includeOld: settings.includeOld, parts: parts,
+      cited: parts.map(function (p) { return p.c.chunk_id; }),
+      offTopic: offTopic, low: isLow(top),
+      changed: !offTopic && top.status === 'active' && engine.supersededFor(top).length > 0,
+      feedback: null, status: ''
+    });
+    active = turns.length - 1;
+    openCard = null;
+    renderAll();
+    scrollToTurn(active);
+  }
+
+  function scrollToTurn(t) {
+    var node = $('turn-' + t);
+    if (node) $('thread').scrollTop = node.offsetTop - $('thread').offsetTop - 12;
+  }
+
+  function note(kind, icon, bold, rest) {
+    return el('div', { class: 'note ' + kind, role: 'note' }, [svg(icon), el('div', null, [el('b', { text: bold + ' ' }), rest])]);
+  }
+
+  function chip(t, c) {
+    var on = active === t && openCard === c.chunk_id;
+    return el('button', {
+      class: 'chip', type: 'button', 'aria-pressed': on ? 'true' : 'false', 'aria-label': 'ดูหลักฐาน ' + c.chunk_id, text: c.chunk_id,
+      onclick: function () {
+        active = t; openCard = c.chunk_id;
+        renderAll();
+        if (!wide.matches) openPanel('evidence');
+        var card = $('ev-' + c.chunk_id.replace('#', '-'));
+        if (card && card.scrollIntoView) card.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  function answerText(turn) {
+    var body = turn.parts.map(function (p) { return p.text + ' [' + p.c.chunk_id + ']'; }).join('\n');
+    var docs = {};
+    turn.parts.forEach(function (p) { docs[p.c.doc_id] = p.c.doc_id + ' ' + p.c.title + ' ฉบับ ' + p.c.version + ' มีผล ' + thaiDate(p.c.effective_date); });
+    return 'ถาม: ' + turn.query + '\n' + body + '\nแหล่งอ้างอิง: ' + Object.keys(docs).map(function (k) { return docs[k]; }).join('; ');
+  }
+
+  function renderThread() {
+    var box = $('inner');
+    box.replaceChildren();
+    if (!turns.length) {
+      var sug = el('div', { class: 'suggest' });
+      EXAMPLES.forEach(function (q) { sug.appendChild(el('button', { class: 'pill', type: 'button', text: q, onclick: function () { ask(q); } })); });
+      box.appendChild(el('div', { class: 'welcome' }, [
+        el('div', { class: 'mark', 'aria-hidden': 'true' }, [svg(BOOK, 26)]),
+        el('h2', { text: 'ถามเรื่องระเบียบของบริษัทได้เลย' }),
+        el('p', { text: 'ทุกคำตอบคัดจากเอกสารภายในพร้อมรหัสอ้างอิง กดรหัสเพื่อดูข้อความต้นฉบับ' }),
+        sug
+      ]));
+      return;
+    }
+    turns.forEach(function (turn, t) {
+      var group = el('div', { id: 'turn-' + t, style: 'display:flex; flex-direction:column; gap:14px;' });
+      group.appendChild(el('div', { class: 'user', text: turn.query }));
+      var bubble = el('div', { class: 'bubble' });
+
+      if (turn.offTopic) {
+        bubble.appendChild(note('info', ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 8h.01', 'M11 12h1v4h1'], 'เรื่องนี้ไม่อยู่ในเอกสารของบริษัท', 'ระบบนี้ตอบได้เฉพาะระเบียบและนโยบายของบริษัท ได้แก่ ' + TOPICS));
+      } else {
+        var top = turn.results[0];
+        if (turn.low) bubble.appendChild(note('info', ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 8h.01', 'M11 12h1v4h1'], 'ไม่พบข้อความที่ตรงกับคำถามชัดเจน', 'ข้อความด้านล่างใกล้เคียงที่สุด ตรวจก่อนใช้ หรือสอบถามฝ่าย' + top.department));
+        var ans = el('div', { class: 'answer' });
+        turn.parts.forEach(function (p) { ans.appendChild(el('p', null, [p.text, chip(t, p.c)])); });
+        bubble.appendChild(ans);
+
+        if (top.status !== 'active') {
+          bubble.appendChild(note('warn', ['M12 3 2 20h20z', 'M12 10v4', 'M12 17h.01'], 'ข้อความนี้มาจากฉบับเดิมที่ถูกแทนที่แล้ว', 'วิธี ' + turn.method + ' จัดฉบับเดิมไว้อันดับ 1 อย่าใช้เป็นคำตอบ'));
+        } else if (turn.changed) {
+          bubble.appendChild(note('warn', ['M3 12a9 9 0 1 0 3-6.7', 'M3 4v4h4', 'M12 8v4l3 2'], 'ระเบียบเรื่องนี้เปลี่ยนจากฉบับเดิม', 'ฉบับปัจจุบันมีผลตั้งแต่ ' + thaiDate(top.effective_date) + ' คำตอบนี้ใช้ฉบับปัจจุบันเท่านั้น'));
+        }
+
+        var refs = el('div', { class: 'refs' }, [el('h3', { text: 'แหล่งอ้างอิง' })]);
+        var seen = {};
+        turn.parts.forEach(function (p) {
+          var c = p.c;
+          if (seen[c.doc_id]) return;
+          seen[c.doc_id] = 1;
+          refs.appendChild(el('div', { class: 'ref' }, [
+            svg(['M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z', 'M14 3v6h6'], 14),
+            el('span', { class: 'mono', text: c.doc_id }),
+            el('span', { text: c.title }),
+            el('span', { class: 'dim', text: 'ฉบับ ' + c.version + ' · มีผล ' + thaiDate(c.effective_date) }),
+            c.status === 'active' ? el('span', { class: 'badge ok', text: 'มีผลบังคับใช้' }) : el('span', { class: 'badge old', text: 'ฉบับเดิม' })
+          ]));
+        });
+        bubble.appendChild(refs);
+
+        var status = el('span', { class: 'act-status', role: 'status', text: turn.status });
+        var setStatus = function (msg) { turn.status = msg; status.textContent = msg; };
+        bubble.appendChild(el('div', { class: 'acts' }, [
+          el('button', { class: 'act', type: 'button', 'aria-label': 'คัดลอกคำตอบพร้อมอ้างอิง', onclick: function () {
+            try {
+              navigator.clipboard.writeText(answerText(turn)).then(function () { setStatus('คัดลอกแล้ว'); }, function () { setStatus('คัดลอกไม่ได้ เลือกข้อความแล้วกด Ctrl/⌘+C'); });
+            } catch (e) { setStatus('คัดลอกไม่ได้ เลือกข้อความแล้วกด Ctrl/⌘+C'); }
+          } }, [svg(['M9 9h10v10H9z', 'M5 15V5h10'], 17)]),
+          el('button', { class: 'act', type: 'button', 'aria-label': 'คำตอบนี้ตรงคำถาม', 'aria-pressed': turn.feedback === 'up' ? 'true' : 'false', onclick: function () {
+            turn.feedback = turn.feedback === 'up' ? null : 'up'; turn.status = turn.feedback ? 'ขอบคุณสำหรับความเห็น' : ''; renderThread();
+          } }, [svg(['M7 10v10H4V10z', 'M7 10l4-7a2 2 0 0 1 3 2l-1 5h5a2 2 0 0 1 2 2.3l-1.4 6A2 2 0 0 1 16.6 20H7'], 17)]),
+          el('button', { class: 'act', type: 'button', 'aria-label': 'คำตอบนี้ไม่ตรงคำถาม', 'aria-pressed': turn.feedback === 'down' ? 'true' : 'false', onclick: function () {
+            turn.feedback = turn.feedback === 'down' ? null : 'down'; turn.status = turn.feedback ? 'ลองถามใหม่ด้วยคำอื่น หรือสอบถามฝ่าย' + turn.results[0].department : ''; renderThread();
+          } }, [svg(['M17 14V4h3v10z', 'M17 14l-4 7a2 2 0 0 1-3-2l1-5H6a2 2 0 0 1-2-2.3l1.4-6A2 2 0 0 1 7.4 4H17'], 17)]),
+          status
+        ]));
+      }
+      group.appendChild(el('article', { class: 'bot' }, [el('span', { class: 'avatar', 'aria-hidden': 'true' }, [svg(BOOK, 17)]), bubble]));
+      box.appendChild(group);
+    });
+  }
+
+  function renderEvidence() {
+    var list = $('ev-list');
+    list.replaceChildren();
+    var turn = turns[active];
+    if (!turn) { $('ev-sub').textContent = ''; list.appendChild(el('div', { class: 'ev-empty', text: 'ถามคำถามแล้วหลักฐานที่ใช้ตอบจะแสดงที่นี่' })); return; }
+    if (turn.offTopic) {
+      $('ev-sub').textContent = 'คำถาม: ' + turn.query;
+      list.appendChild(el('div', { class: 'ev-empty', text: 'ไม่พบเอกสารที่เกี่ยวข้องกับคำถามนี้' }));
+      return;
+    }
+    $('ev-sub').textContent = 'ค้นเจอ ' + turn.results.length + ' ส่วนจากเอกสาร · กดการ์ดเพื่อดูต้นฉบับ';
+    var topScore = turn.results[0].score || 1;
+    turn.results.forEach(function (c) {
+      var pct = Math.max(0, Math.round(c.score / topScore * 100));
+      var cited = turn.cited.indexOf(c.chunk_id) !== -1;
+      var isOpen = openCard === c.chunk_id;
+      var preview = cleanLines(c).join(' ');
+      var bar = el('div', { class: 'bar', 'aria-hidden': 'true' }, [el('i')]);
+      bar.firstChild.style.width = pct + '%';
+      var row = el('div', { class: 'ev-row' }, [el('span', { class: 'ev-id', text: c.chunk_id })]);
+      if (cited) row.appendChild(el('span', { class: 'ev-cited', text: 'อ้างในคำตอบ' }));
+      if (c.status !== 'active') row.appendChild(el('span', { class: 'badge old', text: 'ฉบับเดิม' }));
+      row.appendChild(el('span', { class: 'ev-rel', text: 'ความเกี่ยวข้อง ' + pct + '%' }));
+      var main = el('button', { class: 'ev-main', type: 'button', 'aria-expanded': isOpen ? 'true' : 'false', onclick: function () {
+        openCard = isOpen ? null : c.chunk_id; renderAll();
+      } }, [row, bar, el('div', { class: 'ev-title', text: c.title + ' · ' + c.section }), el('div', { class: 'ev-meta', text: c.doc_id + ' · ฉบับ ' + c.version + ' · มีผล ' + thaiDate(c.effective_date) + ' · ' + c.department })]);
+      if (!isOpen) main.appendChild(el('div', { class: 'ev-snip', text: preview }));
+      var card = el('div', { class: 'ev' + (isOpen ? ' is-open' : ''), id: 'ev-' + c.chunk_id.replace('#', '-') }, [main]);
+
+      if (isOpen) {
+        var used = turn.parts.filter(function (p) { return p.c.chunk_id === c.chunk_id; }).map(function (p) { return p.text; });
+        var q = el('blockquote', { class: 'passage' });
+        var hidden = 0;
+        c.text.split('\n').forEach(function (line) {
+          if (!line.trim()) return;
+          if (INSTRUCTION_LINE.test(line)) { hidden++; return; }
+          q.appendChild(el('p', { class: used.indexOf(line) !== -1 ? 'used' : '' }, [line]));
+        });
+        if (hidden) q.appendChild(el('p', { class: 'hidden-line', text: 'ซ่อน ' + hidden + ' บรรทัดที่สั่งให้ระบบ AI เปลี่ยนวิธีตอบ เพราะไม่ใช่เนื้อหาระเบียบ' }));
+        var body = el('div', { class: 'ev-body' }, [q]);
+        if (used.length) body.appendChild(el('div', { class: 'legend' }, [el('i', { 'aria-hidden': 'true' }), 'ส่วนที่ใช้ในคำตอบ']));
+        if (settings.showScores) body.appendChild(el('div', { class: 'score', text: 'score ' + c.score.toFixed(3) + ' · cosine ' + c.relevance.toFixed(3) + ' · คำตรง ' + c.matched.length + ' (' + Math.round(c.coverage * 100) + '%)' }));
+        var st = el('span', { class: 'act-status', role: 'status' });
+        body.appendChild(el('div', { style: 'display:flex; align-items:center; flex-wrap:wrap; gap:6px;' }, [
+          el('button', { class: 'ghost', type: 'button', text: 'คัดลอกพร้อมอ้างอิง', onclick: function () {
+            var text = cleanLines(c).join(' ') + ' [' + c.chunk_id + '] (' + c.title + ' › ' + c.section + ', มีผล ' + thaiDate(c.effective_date) + ')';
+            try { navigator.clipboard.writeText(text).then(function () { st.textContent = 'คัดลอกแล้ว'; }, function () { st.textContent = 'คัดลอกไม่ได้ เลือกข้อความแล้วกด Ctrl/⌘+C'; }); }
+            catch (e) { st.textContent = 'คัดลอกไม่ได้ เลือกข้อความแล้วกด Ctrl/⌘+C'; }
+          } }), st
+        ]));
+        card.appendChild(body);
+      }
+      list.appendChild(card);
+    });
+  }
+
+  function renderHistory() {
+    var box = $('history');
+    box.replaceChildren();
+    if (!turns.length) { box.appendChild(el('div', { class: 'side-empty', text: 'ยังไม่มีคำถาม' })); return; }
+    turns.forEach(function (turn, t) {
+      box.appendChild(el('button', { class: 'side-item', type: 'button', title: turn.query, 'aria-current': t === active ? 'true' : 'false', text: turn.query, onclick: function () {
+        active = t; openCard = null; renderAll(); scrollToTurn(t); closePanels();
+      } }));
+    });
+  }
+
+  function renderAll() { renderThread(); renderEvidence(); renderHistory(); }
+
+  // แผงเลื่อนบนจอเล็ก: เมนูซ้าย และหลักฐานด้านล่าง
+  var lastFocus = null;
+  function openPanel(id) {
+    lastFocus = document.activeElement;
+    $(id).classList.add('open');
+    $('scrim').hidden = false;
+    var btn = id === 'side' ? $('menu-btn') : $('ev-btn');
+    btn.setAttribute('aria-expanded', 'true');
+    var target = id === 'side' ? $('new') : $('ev-close');
+    if (target) target.focus();
+  }
+  function closePanels() {
+    var wasOpen = $('side').classList.contains('open') || $('evidence').classList.contains('open');
+    $('side').classList.remove('open'); $('evidence').classList.remove('open');
+    $('scrim').hidden = true;
+    $('menu-btn').setAttribute('aria-expanded', 'false'); $('ev-btn').setAttribute('aria-expanded', 'false');
+    if (wasOpen && lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  $('menu-btn').addEventListener('click', function () { openPanel('side'); });
+  $('ev-btn').addEventListener('click', function () { openPanel('evidence'); });
+  $('ev-close').addEventListener('click', closePanels);
+  $('scrim').addEventListener('click', closePanels);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('scrim').hidden) closePanels(); });
+
+  // ส่วนเอกสาร: นับจากข้อมูลจริง
+  var active_docs = {}, old_docs = {}, latest = '';
+  CHUNKS.forEach(function (c) {
+    if (c.status === 'active') active_docs[c.doc_id] = c.department; else old_docs[c.doc_id] = 1;
+    if (c.effective_date > latest) latest = c.effective_date;
+  });
+  var byDept = {};
+  Object.keys(active_docs).forEach(function (d) { byDept[active_docs[d]] = (byDept[active_docs[d]] || 0) + 1; });
+  $('docs-title').textContent = 'เอกสารที่ใช้ตอบ · ' + Object.keys(active_docs).length + ' ฉบับ';
+  Object.keys(byDept).sort(function (a, b) { return byDept[b] - byDept[a]; }).forEach(function (d) {
+    $('depts').appendChild(el('div', { class: 'dept' }, [el('span', { text: d }), el('span', { text: String(byDept[d]) })]));
+  });
+  $('docs-note').textContent = 'ไม่นำฉบับเดิม (superseded) ' + Object.keys(old_docs).length + ' ฉบับมาตอบ · ฉบับล่าสุดมีผล ' + thaiDate(latest);
+
+  EXAMPLES.forEach(function (q) {
+    $('examples').appendChild(el('button', { class: 'side-item', type: 'button', text: q, onclick: function () { closePanels(); ask(q); } }));
+  });
+  $('form').addEventListener('submit', function (e) { e.preventDefault(); var v = $('q').value; $('q').value = ''; ask(v); });
+  $('new').addEventListener('click', function () { turns = []; active = -1; openCard = null; renderAll(); closePanels(); $('q').focus(); });
+  document.querySelectorAll('input[name="method"]').forEach(function (r) { r.addEventListener('change', function () { settings.method = r.value; }); });
+  $('old').addEventListener('change', function (e) { settings.includeOld = e.target.checked; });
+  $('scores').addEventListener('change', function (e) { settings.showScores = e.target.checked; renderEvidence(); });
+  hasDrawer.addEventListener('change', closePanels);
+
+  // เปิดมาพร้อมตัวอย่าง 2 คำถาม ให้เห็นการทำงานทันที
+  ask(EXAMPLES[0]);
+  ask(EXAMPLES[1]);
+  active = 0;
+  renderAll();
+  scrollToTurn(0);
+})();
+</script>
